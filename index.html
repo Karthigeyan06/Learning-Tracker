@@ -388,10 +388,14 @@
 </div>
 
 <div class="toast" id="toast"></div>
-
+  
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  
 <script>
 /* ===================== CONFIG ===================== */
+// Optional: set Supabase project values here (or leave blank and use the Settings modal)
+const SUPABASE_URL = 'https://mkcypsocosdgwldiqqzz.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1rY3lwc29jb3NkZ3dsZGlxcXp6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4MDYwOTMsImV4cCI6MjEwMzM4MjA5M30.-Dn1G62i8kk0ScCNMR7cftsq1adjaKJvwhwg1hYUUn0';
 const TOPICS = [
   { id:'embedded', name:'Embedded Systems',   day:1, color:'var(--c-embedded)', hex:'#4c7cf7', icon:'⚙' },
   { id:'osrtos',   name:'OS & RTOS',          day:2, color:'var(--c-osrtos)',   hex:'#ff8a45', icon:'☰' },
