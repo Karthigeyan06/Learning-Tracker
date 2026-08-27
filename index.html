@@ -106,6 +106,49 @@
     background:var(--phosphor); margin:5px auto 0;
   }
 
+  /* Setup banner */
+  .setup-banner{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    background:linear-gradient(135deg, #16321f, #101820);
+    border:1px solid var(--phosphor-dim);
+    border-radius:var(--radius-md);
+    padding:12px 14px; margin-bottom:16px;
+  }
+  .setup-banner.hidden{display:none;}
+  .sb-title{font-size:13px; font-weight:700; color:var(--phosphor);}
+  .sb-sub{font-size:11px; color:var(--muted); margin-top:2px;}
+  .sb-btn{
+    background:var(--phosphor); color:#06110c; border:none; border-radius:9px;
+    padding:8px 12px; font-size:11.5px; font-weight:700; cursor:pointer; white-space:nowrap;
+  }
+  .sb-dismiss{
+    background:none; border:none; color:var(--muted); cursor:pointer; font-size:13px; padding:4px;
+  }
+
+  /* This week card */
+  .week-card{
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-md);
+    padding:14px; margin-bottom:16px;
+  }
+  .week-card-head{
+    display:flex; justify-content:space-between; align-items:center;
+    font-size:11.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; font-weight:700;
+    margin-bottom:12px;
+  }
+  .week-fraction{color:var(--phosphor); font-family:'JetBrains Mono',monospace; letter-spacing:0;}
+  .ws-days{display:flex; justify-content:space-between;}
+  .ws-day{display:flex; flex-direction:column; align-items:center; gap:6px;}
+  .ws-day .ws-lbl{font-size:10px; color:var(--muted-2);}
+  .ws-circle{
+    width:30px; height:30px; border-radius:50%;
+    border:2px solid var(--border); background:var(--surface-2);
+    display:flex; align-items:center; justify-content:center;
+    font-size:13px; color:var(--muted-2); font-weight:700;
+  }
+  .ws-circle.today{border-color:var(--c); box-shadow:0 0 0 2px color-mix(in srgb, var(--c) 35%, transparent);}
+  .ws-circle.done{background:var(--c); border-color:var(--c); color:#06110c;}
+  .ws-circle.future{opacity:.4;}
+
   /* Focus card */
   .focus-card{
     border-radius:var(--radius-lg);
@@ -278,6 +321,17 @@
     <button class="icon-btn" id="settingsBtn" title="Data & sync settings">⚙</button>
   </div>
 
+  <div class="setup-banner hidden" id="setupBanner">
+    <div>
+      <div class="sb-title">Connect Supabase</div>
+      <div class="sb-sub">Store your streaks in the cloud so they sync across every device.</div>
+    </div>
+    <div style="display:flex; gap:6px;">
+      <button class="sb-btn" id="sbConnectBtn">Connect</button>
+      <button class="sb-dismiss" id="sbDismissBtn" title="Dismiss">✕</button>
+    </div>
+  </div>
+
   <!-- HOME -->
   <main class="view active" id="view-home">
     <div class="greeting" id="greetingText">Good Afternoon</div>
@@ -290,6 +344,14 @@
       <div class="focus-title"><span id="focusIcon"></span><span id="focusName"></span></div>
       <div class="focus-sub" id="focusSub"></div>
       <div class="res-list" id="focusResList"></div>
+    </div>
+
+    <div class="week-card" id="weekCard">
+      <div class="week-card-head">
+        <span>This Week</span>
+        <span id="weekFraction" class="week-fraction"></span>
+      </div>
+      <div class="ws-days" id="wsDays"></div>
     </div>
 
     <div class="stat-row" id="statRow"></div>
@@ -369,7 +431,7 @@
 <div class="modal-bg hidden" id="settingsModal">
   <div class="modal">
     <h3>Data & Sync</h3>
-    <p>By default everything is saved to this browser only (localStorage). To sync across devices, connect a free Supabase project.</p>
+    <p><b>Supabase is the recommended default</b> — connect a free project and every device you open this tracker on shares the same streaks. If you skip this, data is saved to this browser only (localStorage) and won't follow you elsewhere.</p>
     <div class="field" style="margin-top:12px;">
       <label>Supabase URL</label>
       <input type="text" id="supaUrl" placeholder="https://xxxx.supabase.co">
@@ -388,14 +450,22 @@
 </div>
 
 <div class="toast" id="toast"></div>
-  
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-/* ===================== CONFIG ===================== */
-// Optional: set Supabase project values here (or leave blank and use the Settings modal)
+/* ===================== SUPABASE CONFIG =====================
+   Paste your Project URL and anon/public key below. This is now the
+   primary way to configure Supabase for this app — baked directly
+   into the file, so it works the moment the page loads on any device,
+   with no settings screen needed.
+   Get these from: Supabase Dashboard → Project Settings → API Keys
+   (Project URL is at the top of that page; use the "anon / public"
+   key, NOT service_role / secret.)
+*/
 const SUPABASE_URL = 'https://mkcypsocosdgwldiqqzz.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1rY3lwc29jb3NkZ3dsZGlxcXp6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4MDYwOTMsImV4cCI6MjEwMzM4MjA5M30.-Dn1G62i8kk0ScCNMR7cftsq1adjaKJvwhwg1hYUUn0';
+
+/* ===================== CONFIG ===================== */
 const TOPICS = [
   { id:'embedded', name:'Embedded Systems',   day:1, color:'var(--c-embedded)', hex:'#4c7cf7', icon:'⚙' },
   { id:'osrtos',   name:'OS & RTOS',          day:2, color:'var(--c-osrtos)',   hex:'#ff8a45', icon:'☰' },
@@ -419,7 +489,18 @@ const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,8
 /* ===================== STORAGE LAYER ===================== */
 let supa = null;
 
-function loadCfg(){ try{ return JSON.parse(localStorage.getItem(LS_SUPA_CFG) || 'null'); }catch(e){ return null; } }
+function loadCfg(){
+  // A config saved via the ⚙ settings screen overrides the hardcoded values below.
+  try{
+    const stored = JSON.parse(localStorage.getItem(LS_SUPA_CFG) || 'null');
+    if (stored && stored.url && stored.key) return stored;
+  }catch(e){}
+  // Otherwise fall back to the values hardcoded at the top of this file.
+  const urlOk = SUPABASE_URL && !SUPABASE_URL.startsWith('PASTE_');
+  const keyOk = SUPABASE_ANON_KEY && !SUPABASE_ANON_KEY.startsWith('PASTE_');
+  if (urlOk && keyOk) return { url: SUPABASE_URL, key: SUPABASE_ANON_KEY };
+  return null;
+}
 function initSupabase(){
   const cfg = loadCfg();
   if (cfg && cfg.url && cfg.key && window.supabase){
@@ -428,20 +509,68 @@ function initSupabase(){
 }
 initSupabase();
 
+// Actually test the connection instead of assuming it works — surfaces the real
+// error (bad URL, bad key, RLS blocking, offline, library failed to load, etc.)
+// instead of silently and invisibly falling back to local storage.
+async function verifySupabaseConnection(){
+  const cfg = loadCfg();
+  if (!cfg) return; // not configured at all — local storage is expected, no warning
+  if (!window.supabase){
+    flagConnectionIssue('Supabase library failed to load (check your internet connection or an ad-blocker). Using local storage for now.');
+    return;
+  }
+  if (!supa){
+    flagConnectionIssue('Supabase client failed to start — double-check the URL. Using local storage for now.');
+    return;
+  }
+  try{
+    const { error } = await supa.from('courses').select('id').limit(1);
+    if (error) throw error;
+  }catch(e){
+    console.error('Supabase connectivity check failed:', e);
+    flagConnectionIssue(`Supabase connection failed: ${e.message || e}. Using local storage for now.`);
+    supa = null;
+  }
+}
+function flagConnectionIssue(msg){
+  const banner = document.getElementById('setupBanner');
+  banner.classList.remove('hidden');
+  banner.querySelector('.sb-title').textContent = 'Supabase not connected';
+  banner.querySelector('.sb-sub').textContent = msg;
+  document.getElementById('sbConnectBtn').textContent = 'Fix';
+  showToast('Supabase connection issue — see banner');
+}
+
 function lsGet(key, fallback){ try{ return JSON.parse(localStorage.getItem(key) || 'null') || fallback; }catch(e){ return fallback; } }
 function lsSet(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
 
+// Supabase is the default backend whenever it's configured. Every function below
+// tries Supabase first and only falls back to on-device localStorage if Supabase
+// isn't configured, or a call to it fails (offline, bad keys, etc).
+let supaFailed = false;
+function noteSupaFailure(err){
+  supaFailed = true;
+  console.warn('Supabase call failed, falling back to local storage:', err);
+  showToast('Sync unavailable — saved locally instead');
+}
+
 async function getCourses(){
   if (supa){
-    const { data, error } = await supa.from('courses').select('*').order('created_at', {ascending:true});
-    if (!error && data) return data.map(r => ({ id:r.id, topicId:r.topic_id, title:r.title, url:r.url, notes:r.notes }));
+    try{
+      const { data, error } = await supa.from('courses').select('*').order('created_at', {ascending:true});
+      if (error) throw error;
+      return data.map(r => ({ id:r.id, topicId:r.topic_id, title:r.title, url:r.url, notes:r.notes }));
+    }catch(e){ noteSupaFailure(e); }
   }
   return lsGet(LS_COURSES, []);
 }
 async function addCourseRec(course){
   if (supa){
-    await supa.from('courses').insert({ topic_id:course.topicId, title:course.title, url:course.url, notes:course.notes });
-    return;
+    try{
+      const { error } = await supa.from('courses').insert({ topic_id:course.topicId, title:course.title, url:course.url, notes:course.notes });
+      if (error) throw error;
+      return;
+    }catch(e){ noteSupaFailure(e); }
   }
   const list = lsGet(LS_COURSES, []);
   list.push(course);
@@ -449,30 +578,42 @@ async function addCourseRec(course){
 }
 async function deleteCourseRec(id){
   if (supa){
-    await supa.from('courses').delete().eq('id', id);
-    return;
+    try{
+      const { error } = await supa.from('courses').delete().eq('id', id);
+      if (error) throw error;
+      return;
+    }catch(e){ noteSupaFailure(e); }
   }
   const list = lsGet(LS_COURSES, []).filter(c => c.id !== id);
   lsSet(LS_COURSES, list);
 }
 async function getCompletions(){
   if (supa){
-    const { data, error } = await supa.from('completions').select('*');
-    if (!error && data) return data.map(r => ({ date:r.date, topicId:r.topic_id, courseId:r.course_id }));
+    try{
+      const { data, error } = await supa.from('completions').select('*');
+      if (error) throw error;
+      return data.map(r => ({ date:r.date, topicId:r.topic_id, courseId:r.course_id }));
+    }catch(e){ noteSupaFailure(e); }
   }
   return lsGet(LS_COMPLETIONS, []);
 }
 async function toggleCompletion(date, topicId, courseId){
-  const list = await getCompletions();
-  const idx = list.findIndex(c => c.date === date && c.courseId === courseId);
   if (supa){
-    if (idx >= 0){
-      await supa.from('completions').delete().eq('date', date).eq('course_id', courseId);
-    } else {
-      await supa.from('completions').insert({ date, topic_id:topicId, course_id:courseId });
-    }
-    return;
+    try{
+      const { data, error } = await supa.from('completions').select('id').eq('date', date).eq('course_id', courseId);
+      if (error) throw error;
+      if (data && data.length){
+        const { error:delErr } = await supa.from('completions').delete().eq('date', date).eq('course_id', courseId);
+        if (delErr) throw delErr;
+      } else {
+        const { error:insErr } = await supa.from('completions').insert({ date, topic_id:topicId, course_id:courseId });
+        if (insErr) throw insErr;
+      }
+      return;
+    }catch(e){ noteSupaFailure(e); }
   }
+  const list = lsGet(LS_COMPLETIONS, []);
+  const idx = list.findIndex(c => c.date === date && c.courseId === courseId);
   if (idx >= 0) list.splice(idx,1);
   else list.push({ date, topicId, courseId });
   lsSet(LS_COMPLETIONS, list);
@@ -600,6 +741,8 @@ function renderHome(){
     <div class="stat-card"><div class="stat-num">${overall.longest}</div><div class="stat-lbl">Longest Streak</div></div>
     <div class="stat-card"><div class="stat-num">${COMPLETIONS.length}</div><div class="stat-lbl">Total Logged</div></div>`;
 
+  renderWeekStreak(now);
+
   // topic grid (weekly streaks per topic = consecutive weekly occurrences)
   const grid = document.getElementById('topicGrid');
   grid.innerHTML = '';
@@ -613,6 +756,32 @@ function renderHome(){
       <div class="tchip-sub">${s.week} wk streak · ${s.total} sessions logged</div>`;
     grid.appendChild(chip);
   });
+}
+function renderWeekStreak(now){
+  const monday = new Date(now);
+  const offset = (now.getDay()+6)%7;
+  monday.setDate(now.getDate()-offset);
+  const doneDatesAll = uniqueDoneDates(null);
+  const daysEl = document.getElementById('wsDays');
+  daysEl.innerHTML = '';
+  let doneCount = 0;
+  for (let i=0;i<7;i++){
+    const d = new Date(monday); d.setDate(monday.getDate()+i);
+    const t = topicForDate(d);
+    const ds = dateStr(d);
+    const isToday = ds === dateStr(now);
+    const isFuture = d > now && !isToday;
+    const isDone = doneDatesAll.has(ds);
+    if (isDone) doneCount++;
+    const wrap = document.createElement('div');
+    wrap.className = 'ws-day';
+    const circleClasses = ['ws-circle', isToday ? 'today' : '', isDone ? 'done' : '', isFuture ? 'future' : ''].join(' ').trim();
+    wrap.innerHTML = `
+      <div class="${circleClasses}" style="--c:${t.hex}">${isDone ? '✓' : t.icon}</div>
+      <div class="ws-lbl">${DOW_SHORT[d.getDay()]}</div>`;
+    daysEl.appendChild(wrap);
+  }
+  document.getElementById('weekFraction').textContent = `${doneCount}/7 days`;
 }
 function computeWeeklyStreak(topicId){
   const dates = Array.from(uniqueDoneDates(topicId)).sort();
@@ -822,11 +991,26 @@ document.getElementById('addCourseBtn').addEventListener('click', async () => {
 
 /* ===================== SETTINGS MODAL ===================== */
 const settingsModal = document.getElementById('settingsModal');
-document.getElementById('settingsBtn').addEventListener('click', () => {
+function openSettingsModal(){
   const cfg = loadCfg();
   document.getElementById('supaUrl').value = cfg?.url || '';
   document.getElementById('supaKey').value = cfg?.key || '';
   settingsModal.classList.remove('hidden');
+}
+document.getElementById('settingsBtn').addEventListener('click', openSettingsModal);
+
+/* ===================== SUPABASE ONBOARDING BANNER ===================== */
+const LS_BANNER_DISMISSED = 'lt_banner_dismissed';
+function refreshSetupBanner(){
+  const banner = document.getElementById('setupBanner');
+  const configured = !!loadCfg();
+  const dismissed = localStorage.getItem(LS_BANNER_DISMISSED) === '1';
+  banner.classList.toggle('hidden', configured || dismissed);
+}
+document.getElementById('sbConnectBtn').addEventListener('click', openSettingsModal);
+document.getElementById('sbDismissBtn').addEventListener('click', () => {
+  localStorage.setItem(LS_BANNER_DISMISSED, '1');
+  refreshSetupBanner();
 });
 document.getElementById('supaCloseBtn').addEventListener('click', () => settingsModal.classList.add('hidden'));
 document.getElementById('supaSaveBtn').addEventListener('click', () => {
@@ -848,7 +1032,9 @@ async function renderAll(){
   renderCourseGroups();
 }
 (async function boot(){
+  refreshSetupBanner();
   renderCalendarControls();
+  await verifySupabaseConnection();
   await refreshData();
   renderAll();
 })();
